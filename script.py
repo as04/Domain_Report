@@ -8,28 +8,53 @@
     g. Total number of class A, B, C, D addresses collected
 """
 import datetime
+import os
 import subprocess
 import socket
+import signal
 import sys
 import time
 from ipaddress import IPv4Address, IPv4Network
 from concurrent.futures import ThreadPoolExecutor
-
+ 
 import redis
-
+ 
 HOSTS = []
-CONN = redis.Redis('localhost')
+ 
+# REDIS_HOST = input("Enter your host (e.g. \'localhost\')")
+# REDIS_PORT = input("Enter your post (default is 6379)")
+# REDIS_PASS = input("Enter your password. (Press Enter if blank) ")
+ 
+ 
 CLASS_A = IPv4Network(("10.0.0.0", "255.0.0.0"))
 CLASS_B = IPv4Network(("172.16.0.0", "255.240.0.0"))
 CLASS_C = IPv4Network(("192.168.0.0", "255.255.0.0"))
-
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_PASS = ''
+ 
+'''Redis Creds. Order: python <scriptname> <host_name> <port> <password>'''
+try:
+    REDIS_HOST = sys.argv[1]
+except:
+    print("Host not entered. Using \'localhost\' by default.")
+try:
+    REDIS_PORT = sys.argv[2]
+except:
+    print("Port not entered. Using \'6379\' by default.")
+try:
+    REDIS_PASS = sys.argv[3]
+except:
+    print("Password not entered. Using \'\' by default.")
+ 
+CONN = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASS)
+ 
 def domain_read():
     '''Read the links from the file and append to list'''
     with open("links.txt") as file_obj:
         for lines in file_obj:
             HOSTS.append(str(lines).replace("\n", ""))
     #print(HOSTS)
-
 def task(host):
     '''Pinging and writing response to Redis'''
     ping_command = "ping -c 5 " + str(host) + ""
@@ -37,7 +62,7 @@ def task(host):
         ip_host = socket.gethostbyname(host)
         #print("{}'s IP is {}".format(host, ip))
     except:
-        response = {"domain" : host}
+        response = {}
         CONN.hmset(host, response)
         #print("{} is an Invalid Domain.".format(host))
     try:
