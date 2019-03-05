@@ -1,4 +1,4 @@
-#Domain_Report
+# Domain_Report
 
 This python application pings each domain in the list (given in a text file), record its IP address and average latency to reach the domain. This is done by workers of thread pool executor.
 
