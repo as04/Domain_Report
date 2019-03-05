@@ -49,17 +49,17 @@ def task(host):
             response = response.split('/')
             response = response[1]
             #print("Average RTT of {} is {}".format(host,response))
-            response = {"ip": ip_host, "avg_rtt": response, "domain": host}
+            response = {"ip": ip_host, "avg_rtt": response}
             CONN.hmset(host, response)
         except:
-            response = {"ip": ip_host, "domain": host}
+            response = {"ip": ip_host}
             CONN.hmset(host, response)
             #print('Something wrong with the Average RTT of {}.'.format(host))
     except:
-        response = {"ip": ip_host, "domain": host}
+        response = {"ip": ip_host}
         CONN.hmset(host, response)
         #print("Can't ping {}.".format(host))
-
+ 
 def write_report(report):
     '''Write the report'''
     filename = "report_" + \
@@ -68,7 +68,7 @@ def write_report(report):
     doc = open(filename, "w")
     doc.write(report)
     doc.close()
-
+ 
 def redis_task():
     '''Read Redis hashset and generate report'''
     rttmax = 0
@@ -83,10 +83,20 @@ def redis_task():
     class_c = 0
     class_d = 0
     for host in HOSTS:
-        res = CONN.hmget(host, "avg_rtt")
-        res_ip = CONN.hmget(host, "ip")
-        if res_ip[0] is not None:
-            res_ip = res_ip[0].decode("utf-8")
+        res = CONN.hgetall(host)
+        try:
+            res_ip = str((res[b'ip']).decode("utf-8"))
+        except:
+            res_ip = None
+        try:
+            res_domain = str(host)
+        except:
+            res_domain = None
+        try:
+            res = (res[b'avg_rtt']).decode("utf-8")
+        except:
+            res = None
+        if res_ip is not None:
             res_ip = IPv4Address(str(res_ip))
             if res_ip in CLASS_A:
                 class_a += 1
@@ -97,18 +107,16 @@ def redis_task():
             else:
                 class_d += 1
         t_count += 1
-        if res[0] is not None:
-            res = float(res[0])
+        if res is not None:
+            res = float(res)
             if res < 10:
                 lat_count += 1
             if rttmax < res:
                 rttmax = res
-                rttmax_domain = CONN.hmget(host, "domain")
-                rttmax_domain = rttmax_domain[0].decode("utf-8")
+                rttmax_domain = res_domain
             if rttmin > res:
                 rttmin = res
-                rttmin_domain = CONN.hmget(host, "domain")
-                rttmin_domain = rttmin_domain[0].decode("utf-8")
+                rttmin_domain = res_domain
         else:
             d_count += 1
     report = str("\
