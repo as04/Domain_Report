@@ -134,20 +134,32 @@ def redis_task():
         t_count-d_count, d_count, lat_count, class_a, class_b, class_c, class_d))
     print(report)
     write_report(report)
-
+ 
 def main():
     '''Execute the tasks'''
     domain_read()
-    with ThreadPoolExecutor(max_workers=500) as executor:
+    signal.signal(signal.SIGINT, signal_handler)
+    with ThreadPoolExecutor(max_workers=700) as executor:
         for host in HOSTS:
+            # signal.signal(signal.SIGINT, signal_handler)
             try:
                 executor.submit(task, (host))
-            except Exception as err:
+            except:
                 print("Something went wrong with the thread: {}".format(err))
     # for host in HOSTS:
     #     var = CONN.hgetall(host)
     #     print(var)
     redis_task()
-
+    CONN.flushdb()
+ 
+def signal_handler(sig, frame):
+    ''' Keyboard interrupt handler '''
+    print("You pressed Ctrl+C, so the half built report is")
+    redis_task()
+    CONN.flushdb()
+    os._exit(1)
+ 
 if __name__ == '__main__':
     main()
+
+
