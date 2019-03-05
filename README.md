@@ -39,5 +39,10 @@ Steps are as follows:
 
 7. Run the Script:
 ```
+	python script.py <redis_host_name> <redis_port> <redis_password>
+```
+    You can also set defaults and run using
+```	
 	python script.py
+
 ```
