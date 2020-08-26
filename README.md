@@ -46,3 +46,4 @@ Steps are as follows:
 	python script.py
 
 ```
+Future Plans: Make an interface in Vue, and use tools like Netcat to get more detailed information on the domains.
